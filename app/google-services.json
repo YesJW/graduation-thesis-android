@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "848204045508",
+    "project_id": "cameratest-aa58a",
+    "storage_bucket": "cameratest-aa58a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848204045508:android:c771f70789f008ea29bd91",
+        "android_client_info": {
+          "package_name": "com.example.cameratest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "848204045508-j8953vkjr53akqu7mfmlrc07kv070d8j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGGLLTbCEV88TJpLndd72XC8Gga1jMaUc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "848204045508-j8953vkjr53akqu7mfmlrc07kv070d8j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
