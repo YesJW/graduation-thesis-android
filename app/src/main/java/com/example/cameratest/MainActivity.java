@@ -188,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                                             Log.d("facedetection", "눈 감음 왼쪽 : " + face.getLeftEyeOpenProbability() + "오른쪽 : "+ face.getRightEyeOpenProbability());
                                             if (check == false) {
                                                 check = true;
+                                                Toast.makeText(MainActivity.this, "출석체크를 완료하였습니다.", Toast.LENGTH_SHORT).show();
                                                 captureAndUpload();
                                             }
 
@@ -359,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected Integer doInBackground(Void... voids) {
                 try {
-                    String url1 = "http://192.168.35.58:8081/upload";
+                    String url1 = "http://192.168.35.221:8081/upload";
                     URL url = new URL(url1);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setDoOutput(true);

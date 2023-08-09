@@ -66,7 +66,7 @@ public class SignInActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                String url = "http://192.168.35.58:8081/signIn";
+                String url = "http://192.168.35.221:8081/signIn";
                 URL serverUrl = new URL(url);
 
                 String postData = "id=" + URLEncoder.encode(strings[0], "UTF-8")

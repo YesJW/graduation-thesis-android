@@ -122,7 +122,7 @@ public class SignUpActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                String url = "http://192.168.35.58:8081/signUp";
+                String url = "http://192.168.35.221:8081/signUp";
 
                 URL serverUrl = new URL(url);
                 String postData = "name= " + URLEncoder.encode(strings[0], "UTF-8")
