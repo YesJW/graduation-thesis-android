@@ -34,6 +34,7 @@ public class ScanActivity extends AppCompatActivity {
 
     CheckLecture check_lecture;
     List<String> lecture_lsit;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +50,6 @@ public class ScanActivity extends AppCompatActivity {
     private void startScan(){
         try {
             lecture_lsit = check_lecture.execute().get();
-            Log.d("asdasd", lecture_lsit.toString());
 
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
@@ -67,8 +67,11 @@ private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForA
                 Toast.makeText(ScanActivity.this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
                 String getContent = result.getContents();
                 Log.d("scanQR",getContent);
-                boolean check_lecture = lecture_lsit.contains(getContent);
-                if(check_lecture) {
+                String [] lectureSplit = getContent.split(";");
+
+                boolean check_lecture = lecture_lsit.contains(lectureSplit[0]);
+                // ###############검증 시간 처리 30000 -> 30초
+                if(check_lecture && (System.currentTimeMillis() - Long.parseLong(lectureSplit[1])) <= 15000) {
                     Intent intent = new Intent(ScanActivity.this, MainActivity.class);
                     intent.putExtra("userId", id);
                     startActivity(intent);
