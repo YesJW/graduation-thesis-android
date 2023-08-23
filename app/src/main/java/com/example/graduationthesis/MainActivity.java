@@ -1,10 +1,11 @@
-package com.example.cameratest;
+package com.example.graduationthesis;
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 
+import com.example.graduationthesis.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
@@ -16,19 +17,19 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.util.Pair;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.cameratest.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.face.Face;
@@ -48,6 +49,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding viewBinding;
@@ -57,27 +62,13 @@ public class MainActivity extends AppCompatActivity {
     private ImageCapture imageCapture;
     private boolean check;
 
-
-    /*@Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        switch (newConfig.orientation) {
-            case Configuration.ORIENTATION_PORTRAIT:
-                //ㅁㄴㅇ
-                break;
-
-            case Configuration.ORIENTATION_LANDSCAPE:
-                //ㅁㄴㅇ
-                break;
-        }
-    }*/
-    String id;
+    String id, lectureId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         id = intent.getStringExtra("userId");
+        lectureId = intent.getStringExtra("lectureCode");
         viewBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(viewBinding.getRoot());
         cameraExecutor = Executors.newSingleThreadExecutor();
@@ -190,6 +181,11 @@ public class MainActivity extends AppCompatActivity {
                                                 check = true;
                                                 Toast.makeText(MainActivity.this, "출석체크를 완료하였습니다.", Toast.LENGTH_SHORT).show();
                                                 captureAndUpload();
+                                                Intent intent = new Intent(MainActivity.this, ResultActivity.class);
+                                                intent.putExtra("userId", id);
+                                                intent.putExtra("lectureCode", lectureId);
+                                                startActivity(intent);
+                                                finish();
                                             }
 
 
@@ -237,70 +233,41 @@ public class MainActivity extends AppCompatActivity {
         cameraExecutor.shutdown();
     }
 
-    /*public void capture() {
-        ImageCapture imageCapture = this.imageCapture;
-        if (imageCapture == null) return;
-
-        // Create time stamped name and MediaStore entry.
-        String name = new SimpleDateFormat("yy-MM-dd", Locale.US)
-                .format(System.currentTimeMillis());
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
-        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-            contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image");
-        }
-
-        // Create output options object which contains file + metadata
-        ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(
-                getContentResolver(),
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues)
-                .build();
-
-        // Set up image capture listener, which is triggered after photo has been taken
-        imageCapture.takePicture(
-                outputOptions,
-                ContextCompat.getMainExecutor(this),
-                new ImageCapture.OnImageSavedCallback() {
-                    @Override
-                    public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-                        String msg = "Photo capture succeeded: " + output.getSavedUri();
-                        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onError(@NonNull ImageCaptureException exception) {
-                    }
-                }
-        );
-    }*/
     public void captureAndUpload() {
         ImageCapture imageCapture = this.imageCapture;
         if (imageCapture == null) return;
 
-        // Set up image capture listener, which is triggered after photo has been taken
         imageCapture.takePicture(
                 ContextCompat.getMainExecutor(this),
                 new ImageCapture.OnImageCapturedCallback() {
+                    @SuppressLint("CheckResult")
                     @Override
                     public void onCaptureSuccess(@NonNull ImageProxy image) {
-                        // Convert ImageProxy to Bitmap
-                        Bitmap bitmap = imageToBitmap(image);
+                        Observable.fromCallable(() -> {
+                                    Bitmap bitmap = imageToBitmap(image);
 
-                        // Encode Bitmap to byte array
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
-                        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+                                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
+                                    byte[] imageBytes = byteArrayOutputStream.toByteArray();
 
-                        // Close the ImageProxy
-                        image.close();
+                                    image.close();
 
-                        String fileName = generateUniqueFileName();
+                                    String fileName = generateUniqueFileName();
 
-
-                        // Send the image to the server
-                        uploadImage(imageBytes, fileName);
+                                    return new Pair<>(imageBytes, fileName);
+                                })
+                                .flatMap(pair -> {
+                                    byte[] imageBytes = pair.first;
+                                    String fileName = pair.second;
+                                    return uploadImage(imageBytes, fileName);
+                                })
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(result -> {
+                                    Log.d("imageUpload", "성공");
+                                }, throwable -> {
+                                    Log.d("imageUpload", "실패");
+                                    throwable.printStackTrace();
+                                });
                     }
 
                     @Override
@@ -311,98 +278,43 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-//    private void uploadImage(byte[] imageBytes, String fileName) {
-//        AsyncTask<Void, Void, Integer> uploadTask = new AsyncTask<Void, Void, Integer>() {
-//            @Override
-//            protected Integer doInBackground(Void... voids) {
-//                try {
-//                    String url1 = "http://192.168.35.58:8081/upload";
-//                    URL url = new URL(url1);
-//                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//                    connection.setDoOutput(true);
-//                    connection.setRequestMethod("POST");
-//                    connection.setRequestProperty("Content-Type", "image/jpeg");
-//                    connection.setRequestProperty("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-//
-//
-//                    // Write the image data to the request body
-//                    OutputStream outputStream = connection.getOutputStream();
-//                    outputStream.write(imageBytes);
-//                    outputStream.flush();
-//                    outputStream.close();
-//
-//                    int responseCode = connection.getResponseCode();
-//                    if (responseCode == HttpURLConnection.HTTP_OK) {
-//                        // Image uploaded successfully
-//                        // Handle the server response if needed
-//                        Log.d("imageUpload","성공");
-//                    } else {
-//                        Log.d("imageUpload","실패");
-//                        // Image upload failed
-//                        // Handle the error
-//                    }
-//
-//                    connection.disconnect();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    // Handle the exception
-//                }
-//                return null;
-//            }
-//        };
-//
-//        uploadTask.execute();
-//
-//    }
+    private Observable<Integer> uploadImage(byte[] imageBytes, String fileName) {
+        return Observable.fromCallable(() -> {
+                    try {
+                        String url1 = "http://10.0.2.2:8081/upload";
+                        URL url = new URL(url1);
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setDoOutput(true);
+                        connection.setRequestMethod("POST");
+                        connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=*****");
+                        connection.setRequestProperty("Connection", "Keep-Alive");
+                        connection.setRequestProperty("Cache-Control", "no-cache");
 
-    private void uploadImage(byte[] imageBytes, String fileName) {
-        AsyncTask<Void, Void, Integer> uploadTask = new AsyncTask<Void, Void, Integer>() {
-            @Override
-            protected Integer doInBackground(Void... voids) {
-                try {
-                    String url1 = "http://192.168.35.221:8081/upload";
-                    URL url = new URL(url1);
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setDoOutput(true);
-                    connection.setRequestMethod("POST");
-                    connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=*****");
-                    connection.setRequestProperty("Connection", "Keep-Alive");
-                    connection.setRequestProperty("Cache-Control", "no-cache");
+                        OutputStream outputStream = connection.getOutputStream();
+                        outputStream.write(("--*****\r\n" +
+                                "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"\r\n" +
+                                "Content-Type: image/jpeg\r\n" +
+                                "\r\n").getBytes());
+                        outputStream.write(imageBytes);
+                        outputStream.write(("\r\n--*****\r\n" +
+                                "Content-Disposition: form-data; name=\"fileName\"\r\n" +
+                                "\r\n" + fileName + "\r\n" +
+                                "--*****--\r\n").getBytes());
+                        outputStream.flush();
+                        outputStream.close();
 
-                    OutputStream outputStream = connection.getOutputStream();
-                    outputStream.write(("--*****\r\n" +
-                            "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"\r\n" +
-                            "Content-Type: image/jpeg\r\n" +
-                            "\r\n").getBytes());
-                    outputStream.write(imageBytes);  outputStream.write(("\r\n--*****\r\n" +
-                            "Content-Disposition: form-data; name=\"fileName\"\r\n" +
-                            "\r\n" + fileName + "\r\n" +
-                            "--*****--\r\n").getBytes());
-                    outputStream.flush();
-                    outputStream.close();
+                        int responseCode = connection.getResponseCode();
+                        connection.disconnect();
 
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        // Image uploaded successfully
-                        // Handle the server response if needed
-                        Log.d("imageUpload", "성공");
-                    } else {
-                        Log.d("imageUpload", "실패");
-                        // Image upload failed
-                        // Handle the error
+                        return responseCode;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        throw e;
                     }
-
-                    connection.disconnect();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    // Handle the exception
-                }
-                return null;
-            }
-        };
-
-        uploadTask.execute();
+                })
+                .subscribeOn(Schedulers.io());
     }
+
     private Bitmap imageToBitmap(ImageProxy image) {
         ImageProxy.PlaneProxy[] planes = image.getPlanes();
         ByteBuffer buffer = planes[0].getBuffer();

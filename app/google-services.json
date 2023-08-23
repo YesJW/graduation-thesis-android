@@ -1,15 +1,15 @@
 {
   "project_info": {
     "project_number": "848204045508",
-    "project_id": "cameratest-aa58a",
-    "storage_bucket": "cameratest-aa58a.appspot.com"
+    "project_id": "graduationthesis-aa58a",
+    "storage_bucket": "graduationthesis-aa58a.appspot.com"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:848204045508:android:c771f70789f008ea29bd91",
         "android_client_info": {
-          "package_name": "com.example.cameratest"
+          "package_name": "com.example.graduationthesis"
         }
       },
       "oauth_client": [

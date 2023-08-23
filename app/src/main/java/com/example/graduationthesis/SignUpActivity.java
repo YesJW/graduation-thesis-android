@@ -1,4 +1,4 @@
-package com.example.cameratest;
+package com.example.graduationthesis;
 
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

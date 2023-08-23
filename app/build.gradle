@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.cameratest'
+    namespace 'com.example.graduationthesis'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.cameratest"
+        applicationId "com.example.graduationthesis"
         minSdk 24
         targetSdk 33
         versionCode 1
@@ -57,6 +57,9 @@ dependencies {
     implementation 'com.google.mlkit:face-detection:16.0.0'
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     implementation 'com.google.zxing:core:3.4.1'
+
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+    implementation 'io.reactivex.rxjava3:rxjava:3.0.7'
 
 
 
